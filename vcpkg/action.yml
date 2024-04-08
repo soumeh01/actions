@@ -20,7 +20,7 @@ runs:
   using: 'composite'
   steps:
     - name: Cache vcpkg
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       if: ${{ inputs.cache }}
       with:
         key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}${{ inputs.cache }}
