@@ -40,14 +40,6 @@ runs:
         } else {
           iex ((New-Object System.Net.WebClient).DownloadString('https://aka.ms/vcpkg-init.ps1'))
         }
-        # vcpkg x-update-registry --all
-        # cd (Split-Path -Path ${{ inputs.config }} -Parent)
-        # vcpkg activate --json=env.json
-        # Write-Host "Preserving vcpkg PATH ..."
-        # (Get-Content env.json | ConvertFrom-Json).paths.PATH | ForEach-Object { $_.Trim('"') } | ForEach-Object { Write-Host $_; $env:Path += ";$_" }
-        # Write-Host "Preserving vcpkg ENV ..."
-        # (Get-Content env.json | ConvertFrom-Json).tools | ForEach-Object { $_.GetEnumerator() } | ForEach-Object { Write-Host "$($Key)=$($Value)"; $env:($Key) = $Value }
-        # Remove-Item env.json
 
     - name: Set up vcpkg environment for linux or macOS
       if: runner.os != 'Windows'
@@ -62,16 +54,14 @@ runs:
           . <(curl https://aka.ms/vcpkg-init.sh -L)
         fi
 
-    - name: set vcpkg
+    - name: Activate vcpkg
       shell: bash
-      env: 
-        VCPKG_ROOT: ${{ inputs.vcpkg-root }}
       run: |
         vcpkg x-update-registry --all
         cd $(dirname "${{ inputs.config }}")
         vcpkg activate --json=env.json
         echo "Preserving vcpkg PATH ..."
-        jq '.paths.PATH[]' env.json | tr -d '\"' >> $GITHUB_PATH
+        jq '.paths.PATH[]' env.json | tr -d '\"' 1>&2 >> $GITHUB_PATH
         echo "Preserving vcpkg ENV ..."
-        jq '.tools | to_entries | map("\(.key)=\(.value)")[]' env.json | tr -d '\"' >> $GITHUB_ENV
+        jq '.tools | to_entries | map("\(.key)=\(.value)")[]' env.json | tr -d '\"' 1>&2 >> $GITHUB_ENV
         rm env.json
