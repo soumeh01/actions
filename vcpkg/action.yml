@@ -35,8 +35,8 @@ runs:
         VCPKG_ROOT: ${{ inputs.vcpkg-root }}
       run: |
         Write-Host "VCPKG_ROOT=${{ inputs.vcpkg-root }}"
-        if (Test-Path "$env:VCPKG_ROOT\vcpkg-init") {
-          . "$env:VCPKG_ROOT\vcpkg-init"
+        if (Test-Path "$env:VCPKG_ROOT\vcpkg-init.ps1") {
+          . "$env:VCPKG_ROOT\vcpkg-init.ps1"
         } else {
           iex ((New-Object System.Net.WebClient).DownloadString('https://aka.ms/vcpkg-init.ps1'))
         }
