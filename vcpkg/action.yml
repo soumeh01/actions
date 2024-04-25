@@ -56,6 +56,8 @@ runs:
 
     - name: Activate vcpkg
       shell: bash
+      env:
+        VCPKG_ROOT: ${{ inputs.vcpkg-root }}
       run: |
         vcpkg x-update-registry --all
         cd $(dirname "${{ inputs.config }}")
