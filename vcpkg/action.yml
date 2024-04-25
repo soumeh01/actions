@@ -56,10 +56,7 @@ runs:
 
     - name: Activate vcpkg
       shell: bash
-      env:
-        VCPKG_ROOT: ${{ inputs.vcpkg-root }}
       run: |
-        echo "VCPKG_ROOT=${{ inputs.vcpkg-root }}" >> $GITHUB_ENV
         vcpkg x-update-registry --all
         cd $(dirname "${{ inputs.config }}")
         vcpkg activate --json=env.json
