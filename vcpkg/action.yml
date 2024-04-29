@@ -28,8 +28,23 @@ runs:
           vcpkg-${{ runner.os }}-${{ runner.arch }}-
         path: ${{ inputs.vcpkg-root }}
 
-    - shell: bash
-      env: 
+    - name: Set up vcpkg environment windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        VCPKG_ROOT: ${{ inputs.vcpkg-root }}
+      run: |
+        Write-Host "VCPKG_ROOT=${{ inputs.vcpkg-root }}"
+        if (Test-Path "$env:VCPKG_ROOT\vcpkg-init.ps1") {
+          . "$env:VCPKG_ROOT\vcpkg-init.ps1"
+        } else {
+          iex (iwr -useb https://aka.ms/vcpkg-init.ps1)
+        }
+
+    - name: Set up vcpkg environment for linux or macOS
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
         VCPKG_ROOT: ${{ inputs.vcpkg-root }}
       run: |
         echo "VCPKG_ROOT=${{ inputs.vcpkg-root }}" >> $GITHUB_ENV
@@ -38,11 +53,31 @@ runs:
         else
           . <(curl https://aka.ms/vcpkg-init.sh -L)
         fi
-        vcpkg x-update-registry --all
+        # which vcpkg
+        # ls -l /home/runner/work/actions/actions/.vcpkg
+
+
+    # - name: locate vcpkg
+    #   shell: bash
+    #   if: runner.os != 'Windows'
+    #   env:
+    #     VCPKG_ROOT: ${{ inputs.vcpkg-root }}
+    #   run: |
+    #     which vcpkg
+    #     ls -l /home/runner/work/actions/actions/.vcpkg
+
+    - name: Activate vcpkg
+      if: success()
+      shell: bash
+      run: |
+        cd ${{ inputs.vcpkg-root }}
+        ./vcpkg --vcpkg-root=${{ inputs.vcpkg-root }}
+        vcpkg x-update-registry --all --vcpkg-root=${{ inputs.vcpkg-root }}
+        which vcpkg
         cd $(dirname "${{ inputs.config }}")
         vcpkg activate --json=env.json
         echo "Preserving vcpkg PATH ..."
-        jq '.paths.PATH[]' env.json | tr -d '\"' | tee /dev/stderr >> $GITHUB_PATH
+        jq '.paths.PATH[]' env.json | tr -d '\"' 1>&2 >> $GITHUB_PATH
         echo "Preserving vcpkg ENV ..."
-        jq '.tools | to_entries | map("\(.key)=\(.value)")[]' env.json | tr -d '\"' | tee /dev/stderr >> $GITHUB_ENV
+        jq '.tools | to_entries | map("\(.key)=\(.value)")[]' env.json | tr -d '\"' 1>&2 >> $GITHUB_ENV
         rm env.json

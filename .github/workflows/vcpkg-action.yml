@@ -14,7 +14,11 @@ on:
 jobs:
   test:
     name: Test vcpkg action
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # os: [windows-2022, windows-2019, ubuntu-22.04, ubuntu-20.04, macos-13, macos-12, macos-11]
+        os: [ubuntu-22.04]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,6 +27,8 @@ jobs:
         uses: ./vcpkg
         with:
           config: ./vcpkg/vcpkg-configuration.json
+          vcpkg-root: "${{ github.workspace }}/.vcpkg"
+          cache: "-"
 
       - name: Verify some tools
         run: |
