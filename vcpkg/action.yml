@@ -53,9 +53,6 @@ runs:
         else
           . <(curl https://aka.ms/vcpkg-init.sh -L)
         fi
-        # which vcpkg
-        # ls -l /home/runner/work/actions/actions/.vcpkg
-
 
     # - name: locate vcpkg
     #   shell: bash
@@ -70,12 +67,10 @@ runs:
       if: success()
       shell: bash
       run: |
-        cd ${{ inputs.vcpkg-root }}
-        ./vcpkg --vcpkg-root=${{ inputs.vcpkg-root }}
-        vcpkg x-update-registry --all --vcpkg-root=${{ inputs.vcpkg-root }}
-        which vcpkg
+        ./vcpkg --vcpkg-root=${{ env.VCPKG_ROOT }}
+        vcpkg x-update-registry --all --vcpkg-root=${{ env.VCPKG_ROOT }}
         cd $(dirname "${{ inputs.config }}")
-        vcpkg activate --json=env.json
+        vcpkg activate --json=env.json --vcpkg-root=${{ env.VCPKG_ROOT }}
         echo "Preserving vcpkg PATH ..."
         jq '.paths.PATH[]' env.json | tr -d '\"' 1>&2 >> $GITHUB_PATH
         echo "Preserving vcpkg ENV ..."
