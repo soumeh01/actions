@@ -54,14 +54,14 @@ runs:
           . <(curl https://aka.ms/vcpkg-init.sh -L)
         fi
 
-    # - name: locate vcpkg
-    #   shell: bash
-    #   if: runner.os != 'Windows'
-    #   env:
-    #     VCPKG_ROOT: ${{ inputs.vcpkg-root }}
-    #   run: |
-    #     which vcpkg
-    #     ls -l /home/runner/work/actions/actions/.vcpkg
+    - name: locate vcpkg
+      shell: bash
+      if: runner.os != 'Windows'
+      env:
+        VCPKG_ROOT: ${{ inputs.vcpkg-root }}
+      run: |
+        which vcpkg
+        ls -l /home/runner/work/actions/actions/.vcpkg
 
     - name: Activate vcpkg
       if: success()
