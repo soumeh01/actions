@@ -67,7 +67,7 @@ runs:
       if: success()
       shell: bash
       run: |
-        ./vcpkg --vcpkg-root=${{ env.VCPKG_ROOT }}
+        vcpkg --vcpkg-root=${{ env.VCPKG_ROOT }}
         vcpkg x-update-registry --all --vcpkg-root=${{ env.VCPKG_ROOT }}
         cd $(dirname "${{ inputs.config }}")
         vcpkg activate --json=env.json --vcpkg-root=${{ env.VCPKG_ROOT }}
