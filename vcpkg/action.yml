@@ -9,11 +9,10 @@ inputs:
     default: "./vcpkg-configuration.json"
   vcpkg-root:
     description: "Root folder for vcpkg"
-    default: "${{ github.workspace }}/.vcpkg"
+    default: $VCPKG_INSTALLATION_ROOT
     required: false
   cache:
     description: "Cache key suffix, set to empty to disable cache."
-    default: "-"
     required: false
   
 runs:
@@ -21,92 +20,42 @@ runs:
   steps:
     - name: Cache vcpkg
       uses: actions/cache@v4
-      if: ${{ inputs.cache }}
+      if: ${{ inputs.cache != '' }}
       with:
-        key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}
-        restore-keys: |
-          vcpkg-${{ runner.os }}-${{ runner.arch }}-
+        key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}${{ inputs.cache }}
         path: ${{ inputs.vcpkg-root }}
 
+    # - name: Check if cache restore
+    #   shell: bash
+    #   run: |
+    #     echo "${{ inputs.vcpkg-root }}" | sed 's|\\|/|g; s|^\([A-Za-z]\):|/mnt/\L\1|'
+
+
     - name: Check if cache restore
-      id: check_cache_restore
+      if: ${{ inputs.cache != '' }}
       shell: bash
       run: |
-        VCPKG_PATH=$(echo $VCPKG_ROOT | sed 's|\\|/|g')
-        if [ -z "$(ls -A $VCPKG_PATH)" ]; then
+        VCPKG_ROOT_PATH=$(echo "${{ inputs.vcpkg-root }}" | sed 's|\\|/|g; s|^\([A-Za-z]\):|/\L\1|')
+        if [ -z "$(ls -A $VCPKG_ROOT_PATH)" ]; then
           echo "No cache restored"
           echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
         else
           echo "Cache restored"
-          echo "VCPKG_ROOT=${{ inputs.vcpkg-root }}" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=$VCPKG_ROOT_PATH" >> $GITHUB_ENV
         fi
 
-    - name: Set up vcpkg environment windows
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        if (Test-Path "$env:VCPKG_ROOT\vcpkg-init.ps1") {
-          Write-Host "VCPKG_ROOT=${{ inputs.vcpkg-root }}"
-          . "$env:VCPKG_ROOT\vcpkg-init.ps1"
-        } else {
-          Write-Host "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT"
-        }
-
-    - name: Set up vcpkg environment for linux or macOS
-      if: runner.os != 'Windows'
+    - name: Check if cache restore
       shell: bash
       run: |
-        if [ -f "$VCPKG_ROOT/vcpkg-init" ]; then
-          echo Hello
-          echo "VCPKG_ROOT=${{ inputs.vcpkg-root }}" >> $GITHUB_ENV
-          . "$VCPKG_ROOT/vcpkg-init"
-        else
-          echo World
-          echo $VCPKG_INSTALLATION_ROOT
-          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
-        fi
-
-
-
-
-    # - name: Set up vcpkg environment windows
-    #   if: runner.os == 'Windows'
-    #   shell: pwsh
-    #   env:
-    #     VCPKG_ROOT: ${{ inputs.vcpkg-root }}
-    #   run: |
-    #     Write-Host "VCPKG_ROOT=${{ inputs.vcpkg-root }}"
-    #     if (Test-Path "$env:VCPKG_ROOT\vcpkg-init.ps1") {
-    #       . "$env:VCPKG_ROOT\vcpkg-init.ps1"
-    #     } else {
-    #       iex (iwr -useb https://aka.ms/vcpkg-init.ps1)
-    #     }
-
-    # - name: Set up vcpkg environment for linux or macOS
-    #   if: runner.os != 'Windows'
-    #   shell: bash
-    #   env:
-    #     VCPKG_ROOT: ${{ inputs.vcpkg-root }}
-    #   run: |
-    #     echo "VCPKG_ROOT=${{ inputs.vcpkg-root }}" >> $GITHUB_ENV
-    #     if [ -f "$VCPKG_ROOT/vcpkg-init" ]; then
-    #       . "$VCPKG_ROOT/vcpkg-init"
-    #     else
-    #       . <(curl https://aka.ms/vcpkg-init.sh -L)
-    #     fi
-
-    - name: locate vcpkg
-      shell: bash
-      run: |
-        echo $VCPKG_ROOT
+        echo "$VCPKG_ROOT"
 
     - name: Activate vcpkg
       if: success()
       shell: bash
       run: |
-        $VCPKG_ROOT/vcpkg x-update-registry --all
+        vcpkg x-update-registry --all --vcpkg-root=$VCPKG_ROOT
         cd $(dirname "${{ inputs.config }}")
-        $VCPKG_ROOT/vcpkg activate --json=env.json
+        vcpkg activate --json=env.json --vcpkg-root=$VCPKG_ROOT
         echo "Preserving vcpkg PATH ..."
         jq '.paths.PATH[]' env.json | tr -d '\"' 1>&2 >> $GITHUB_PATH
         echo "Preserving vcpkg ENV ..."
