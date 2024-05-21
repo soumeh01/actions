@@ -32,7 +32,8 @@ runs:
       id: check_cache_restore
       shell: bash
       run: |
-        if [ -z "$(ls -A ${{ inputs.vcpkg-root }})" ]; then
+        VCPKG_PATH=$(echo $VCPKG_ROOT | sed 's|\\|/|g')
+        if [ -z "$(ls -A $VCPKG_PATH)" ]; then
           echo "No cache restored"
           echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
         else
